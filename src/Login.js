@@ -1,6 +1,10 @@
 import React, { useState } from 'react';
 import { FaUser, FaLock } from "react-icons/fa"; 
 import { RiUserAddLine } from "react-icons/ri";
+import { auth, config, database } from './config/config'; // Ajusta la ruta según sea necesario
+import { createUserWithEmailAndPassword, signInWithEmailAndPassword } from 'firebase/auth';
+import { ref, set } from 'firebase/database';
+import { useNavigate } from 'react-router-dom';
 
 function Login() {
     const [email, setEmail] = useState('');
@@ -8,20 +12,40 @@ function Login() {
     const [firstName, setFirstName] = useState('');
     const [lastName, setLastName] = useState('');
     const [showLogin, setShowLogin] = useState(true);
+    const navigate = useNavigate();
 
-    const handleSubmit = (e) => {
+    const handleSubmit = async (e) => {
         e.preventDefault();
-        console.log('Email:', email, 'Password:', password);
+        try {
+            const userCredential = await signInWithEmailAndPassword(auth, email, password);
+            console.log('Usuario autenticado:', userCredential.user);
+            navigate('/Block');
+        } catch (error) {
+            console.error('Error al iniciar sesión:', error);
+        }
     };
 
     const handleCreateAccount = () => {
         setShowLogin(false);
     };
 
-    const handleAccountSubmit = (e) => {
+    const handleAccountSubmit = async (e) => {
         e.preventDefault();
-        console.log('Nombre:', firstName, 'Apellido:', lastName, 'Email:', email, 'Password:', password);
+        try {
+            const userCredential = await createUserWithEmailAndPassword(auth, email, password);
+            // Guarda el usuario en la base de datos
+            await set(ref(database, 'usuarios/' + userCredential.user.uid), {
+                firstName,
+                lastName,
+                email
+            });
+            console.log('Usuario creado:', userCredential.user);
+            navigate('/Block');
+        } catch (error) {
+            console.error('Error al crear la cuenta:', error);
+        }
     };
+
 
     return (
         <div className="login-container">

@@ -1,0 +1,75 @@
+.page-container {
+    background-color: rgb(245, 234, 240);
+    min-height: 103.2vh;
+    width: 210.4vh;
+    margin: 0;
+}
+
+.top-container {
+    background-color: white;
+    height: 100px;
+    position: relative;
+    z-index: 100;
+}
+
+.left-container {
+    background-color: white;
+    width: 250px;
+    height: 87.5vh;
+    position: relative;
+    z-index: 10; 
+    position: absolute;
+}
+
+.principal-container {
+    padding-right: 0; /* Ajusta este valor si es necesario */
+    margin: 80px 0 0 350px; /* Arriba: 20px, Derecha: 0, Abajo: 0, Izquierda: 20px */
+}
+
+.folder-container {
+    background: rgba(204, 51, 82, 0.219);
+    padding: 20px;
+    border: 1px solid #ccccccaf;
+    border-radius: 8px;
+    width: 200px;
+    margin:20px auto;
+}
+
+.folder-container .icon{
+    position: absolute;
+    font-size: 40px;
+    color: rgb(206, 118, 135);
+}
+
+.folder-container .text {
+    width: 73%;
+    padding: 20px;
+    font-size: 16px;
+}
+
+.folder-container .date {
+    width: 73%;
+    padding: 2px;
+    font-size: 16px;
+}
+
+.secondary-container {
+    margin: 90px 90px 0 300px; 
+}
+
+.secondary-container .note-input {
+    width: 100%;
+    resize: none;
+    background: white;
+    border: 1px rgb(194, 0, 107);
+    height: 380px;
+    outline: none;
+}
+
+.secondary-container .note-input::placeholder {
+    color:#999;
+}
+
+.secondary-container.note-input.focused {
+    outline: 3px solid rgb(128, 3, 72);
+}
