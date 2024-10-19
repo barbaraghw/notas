@@ -1,17 +1,57 @@
 import React, { useState } from 'react'; 
 import { FaNoteSticky } from "react-icons/fa6";
+import { FaBold, FaItalic, FaUnderline } from "react-icons/fa";
+import { firestore, auth } from './config/config'; 
+import { doc, setDoc } from "firebase/firestore"; 
+import { TfiWrite } from "react-icons/tfi"; 
 
 function Block() {
     const [showPrincipal, setShowPrincipal] = useState(true);
-    const [note, setNote] = useState ('');
-    const [isFocused, setIsFocused] = useState (false);
+    const [note, setNote] = useState('');
+    const [title, setTitle] = useState('');
+    const [isFocused, setIsFocused] = useState(false);
 
     const mostrarPrincipal = () => {
         setShowPrincipal(false);
     };
 
+    const handleInput = (e) => {
+        setNote(e.target.value);
+    };
+
+    const handleTitleInput = (e) => {
+        setTitle(e.target.value);
+    };
+
+    const saveNote = async () => {
+        const user = auth.currentUser; 
+        if (user) {
+            const noteData = {
+                title,
+                content: note,
+                userId: user.uid,
+                createdAt: new Date(),
+            };
+
+            try {
+                const noteRef = doc(firestore, 'notes', `${user.uid}_${Date.now()}`);
+                await setDoc(noteRef, noteData);
+                alert('Nota guardada exitosamente!');
+                setNote('');
+                setTitle('');
+            } catch (error) {
+                console.error('Error al guardar la nota: ', error);
+            }
+        } else {
+            alert('Por favor, inicie sesión para guardar notas.');
+        }
+    };
+
     return (
         <div className='page-container'>
+            <div className='icon-container'>
+                <TfiWrite className='write-icon' />
+            </div>
             <div className='top-container'>
                 <h1 className='page-title'>Mis notas</h1>
             </div>
@@ -35,16 +75,39 @@ function Block() {
                 </div>
             ) : (
                 <div className='secondary-container'>
-                    <h2>Contenedor Secundario</h2>
+                    <h2 className='new-note-title'>¡Nueva nota!</h2> 
+                    <div className='top-row'>
+                        <div className='toolbar'>
+                            <button onClick={() => document.execCommand('bold')}>
+                                <FaBold />
+                            </button>
+                            <button onClick={() => document.execCommand('italic')}>
+                                <FaItalic />
+                            </button>
+                            <button onClick={() => document.execCommand('underline')}>
+                                <FaUnderline />
+                            </button>
+                        </div>
+                        <div className='button-container'>
+                            <button className='save-button' onClick={saveNote}>Guardar Nota</button>
+                            <button className='back-button' onClick={() => setShowPrincipal(true)}>Volver</button>
+                        </div>
+                    </div>
+                    <input 
+                        type="text" 
+                        className='title-note' 
+                        placeholder='Título de la nota' 
+                        value={title}
+                        onChange={handleTitleInput}
+                    />
                     <textarea
-                        className={`note-input ${isFocused ? 'focused' : ''}`}  
-                        placeholder='¡Comienza tu nueva nota!'
+                        className={`note-input ${isFocused ? 'focused' : ''}`}
                         value={note}
-                        onChange={(e) => setNote(e.target.value)}
+                        onChange={handleInput}
                         onFocus={() => setIsFocused(true)}
                         onBlur={() => setIsFocused(false)}
-                        />
-                    <button onClick={() => setShowPrincipal(true)}>Volver</button>
+                        placeholder='¡Comienza tu nueva nota!' 
+                    />
                 </div>
             )}
         </div>
