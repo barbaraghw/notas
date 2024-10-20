@@ -180,6 +180,7 @@ function Block() {
                         </div>
                         <div className='button-container'>
                             <button className='save-button' onClick={saveNote}>Guardar Nota</button>
+                            <button className='delete-button' onClick={deleteNote}>Borrar</button>
                             <button className='back-button' onClick={mostrarPrincipal}>Volver</button>
                         </div>
                     </div>
