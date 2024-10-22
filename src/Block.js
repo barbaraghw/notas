@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react'; 
-import { FaNoteSticky } from "react-icons/fa6";
+import { FaNoteSticky, FaCircleArrowRight, FaCircleArrowLeft } from "react-icons/fa6";
 import { FaBold, FaItalic, FaUnderline } from "react-icons/fa";
 import { firestore, auth } from './config/config'; 
 import { doc, setDoc, collection, getDocs, deleteDoc } from "firebase/firestore"; 
@@ -14,7 +14,9 @@ function Block() {
     const [isUnderlined, setIsUnderlined] = useState(false);
     const [notes, setNotes] = useState([]);
     const [filteredNotes, setFilteredNotes] = useState([]);
-
+    const [startIndex, setStartIndex] = useState(0);
+    const [showBackButton, setShowBackButton] = useState(false);
+    const notesToShow = filteredNotes.slice(startIndex, startIndex + 4);
     const noteInputRef = useRef(null);
 
     const toggleBold = () => setIsBold(prev => !prev);
@@ -41,6 +43,20 @@ function Block() {
         }
     };
 
+    const showMoreNotes = () => {
+        setStartIndex(prevIndex => Math.min(prevIndex + 4, filteredNotes.length));
+    };
+
+    const showLessNotes = () => {
+        setStartIndex(prevIndex => Math.max(prevIndex - 4, 0));
+    };
+
+    const showAllNotes = () => {
+        setStartIndex(0);
+        setFilteredNotes(notes);
+        setShowBackButton(notes.length > 4);
+    };
+    
     useEffect(() => {
         const fetchNotes = async () => {
             const user = auth.currentUser;
@@ -54,17 +70,19 @@ function Block() {
                         title: data.title,
                         content: data.content,
                         userId: data.userId,
-                        createdAt: data.createdAt.toDate() // Convertir a Date
+                        createdAt: data.createdAt.toDate() 
                     };
-                });
+                }).sort((a, b) => b.createdAt - a.createdAt); // Ordenar por fecha descendente
+
                 setNotes(notesList);
-                setFilteredNotes(notesList); // Inicialmente, mostrar todas las notas
+                setFilteredNotes(notesList);
+                setShowBackButton(notesList.length > 4); 
             }
         };
-    
+
         fetchNotes();
     }, []);
-
+    
     const mostrarPrincipal = () => {
         setShowPrincipal(true);
     };
@@ -90,9 +108,12 @@ function Block() {
             try {
                 const noteRef = doc(firestore, 'notes', `${user.uid}_${Date.now()}`);
                 await setDoc(noteRef, noteData);
-    
-                setNotes(prevNotes => [...prevNotes, {...noteData, id: noteRef.id}]);
-                setFilteredNotes(prevNotes => [...prevNotes, {...noteData, id: noteRef.id}]);
+                
+                const newNote = {...noteData, id: noteRef.id };
+                setNotes(prevNotes => [...prevNotes, { ...noteData, id: noteRef.id }]); // Agregar la nueva nota correctamente
+                setFilteredNotes(prevNotes => [...prevNotes, { ...noteData, id: noteRef.id }]);
+                setStartIndex(0);
+                setShowBackButton([...notes, noteData].length > 4); // Actualizar estado del botón
 
                 alert('Nota guardada exitosamente!');
                 setNote('');
@@ -103,9 +124,7 @@ function Block() {
             } catch (error) {
                 console.error('Error al guardar la nota: ', error);
             }
-        } else {
-            alert('Por favor, inicie sesión para guardar notas.');
-        }
+        } 
     };
 
     const filterNotes = (type) => {
@@ -113,22 +132,18 @@ function Block() {
         let filtered;
 
         if (type === 'today') {
-            filtered = notes.filter(note => {
-                return note.createdAt.toDateString() === now.toDateString();
-            });
+            filtered = notes.filter(note => note.createdAt.toDateString() === now.toDateString());
         } else if (type === 'thisMonth') {
-            filtered = notes.filter(note => {
-                return note.createdAt.getMonth() === now.getMonth() && note.createdAt.getFullYear() === now.getFullYear();
-            });
+            filtered = notes.filter(note => note.createdAt.getMonth() === now.getMonth() && note.createdAt.getFullYear() === now.getFullYear());
         } else if (type === 'thisYear') {
-            filtered = notes.filter(note => {
-                return note.createdAt.getFullYear() === now.getFullYear();
-            });
+            filtered = notes.filter(note => note.createdAt.getFullYear() === now.getFullYear());
         } else {
             filtered = notes;
         }
         
         setFilteredNotes(filtered);
+        setStartIndex(0); 
+        setShowBackButton(filtered.length > 4); 
     }
 
     return (
@@ -145,12 +160,20 @@ function Block() {
             </div>
             {showPrincipal ? (
                 <div className='principal-container'>
-                    <h2>Carpetas recientes</h2>
+                    <h1>Carpetas recientes</h1>
+
+                    <button onClick={showAllNotes}>Mostrar todas</button>
                     <button onClick={() => filterNotes('today')}>Hoy</button>
                     <button onClick={() => filterNotes('thisWeek')}>Esta semana</button>
                     <button onClick={() => filterNotes('thisMonth')}>Este mes</button>
+                    
                     <div className='folder-container'>
-                        {filteredNotes.map(note => (
+                        {showBackButton && startIndex > 0 && (
+                            <button className='back2-button' onClick={showLessNotes}>
+                                <FaCircleArrowLeft />
+                            </button>
+                        )}
+                        {notesToShow.map(note => (
                             <div className='folder' key={note.id}>
                                 <span className='icon'><FaNoteSticky /></span>
                                 <div className='text'>
@@ -161,6 +184,11 @@ function Block() {
                                 </div>
                             </div>
                         ))}
+                        {startIndex + 4 < filteredNotes.length && (
+                            <button className='more-button' onClick={showMoreNotes}>
+                                <FaCircleArrowRight />
+                            </button>
+                        )}
                     </div>
                 </div>
             ) : (
